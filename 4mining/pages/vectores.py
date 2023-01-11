@@ -52,32 +52,38 @@ tab_selected_style2 = {
 
 
 layout = html.Div([
-    html.H1('Support Vector Machines (SVM)🔵🟡', style={'text-align': 'center'}),
+    Header(app),
+    html.H1('Support Vector Machines (SVM)', style={'text-align': 'center'}),
+    html.Div([
     dcc.Upload(
-        id='upload-data',
-        children=html.Div([
-            'Drag and Drop or Select Files'
-        ]),
-        style={
-            'width': '100%',
-            'height': '100%',
-            'lineHeight': '60px',
-            'borderWidth': '1px',
-            'borderStyle': 'dashed',
-            'borderRadius': '5px',
-            'textAlign': 'center',
-            'margin': '10px',
-            'display': 'flex',
-            'justify-content': 'center',
-            'align-items': 'center',
-            'flex-direction': 'column'
-        },
-        multiple=True,
-        accept='.csv, .txt, .xls, .xlsx'
+            id='upload-data',
+            children=html.Div([
+                'Selecciona una fuente de datos (Formato .xslx, .csv) ',
+                html.A('Selecionar Datos (Unicamente uno a la vez)')
+            ]),
+            style={
+                'width': '100%',
+                'height': '60px',
+                'lineHeight': '60px',
+                'borderWidth': '1px',
+                'borderStyle': 'dashed',
+                'borderRadius': '5px',
+                'textAlign': 'center',
+                'margin-left': 'auto',
+                'margin-right': 'auto',
+                'margin-bottom': '20px',
+                
+            },
+            # Allow multiple files to be uploaded
+            multiple=True,
+            accept='.csv, .txt, .xls, .xlsx'
+        ),
+        ], 
+    className="upload", 
     ),
     html.Div(id='output-data-upload-svm'), # output-datatable
     html.Div(id='output-div'),
-])
+], className="page")
 
 def parse_contents(contents, filename,date):
     content_type, content_string = contents.split(',')
@@ -98,45 +104,42 @@ def parse_contents(contents, filename,date):
         ])
 
     return html.Div([
-        dbc.Alert('El archivo cargado es: {}'.format(filename), color="success"),
-        # Solo mostramos las primeras 5 filas del dataframe, y le damos estilo para que las columnas se vean bien
-        dash_table.DataTable(
-            #Centramos la tabla de datos:
+        dbc.Toast(
+            [html.P('El número de Filas del Dataframe es de: {}'.format(df.shape[0])),
+            html.P('El número de Columnas del Dataframe es de: {}'.format(df.shape[1])),
+            dbc.Alert('El archivo cargado es: {}'.format(filename), color="success"),],
+            id="simple-toast",
+            header="Información Dataframe",
+            style={
+                'position': 'relative',
+                'border-radius': '5px',
+                'box-shadow': '0 0 10px #003B64',
+                'padding': '5px',
+                'width' : '60%',
+                'margin': 'auto',
+                'margin-bottom': '5px',
+                
+            }
+        ),
+        dash_table.DataTable(    
             data=df.to_dict('records'),
             page_size=8,
-            style_data_conditional=[
-                {
-                    'if': {'row_index': 'odd'},
-                    'backgroundColor': 'rgb(248, 248, 248)'
-                }
-            ],
-            filter_action='native',
-            sort_action='native',
+            #filter_action='native',
+            #sort_action='native',
             sort_mode='multi',
             column_selectable='single',
             row_deletable=True,
+            cell_selectable=True,
             editable=True,
             row_selectable='multi',
-            columns=[{'name': i, 'id': i} for i in df.columns],
-            style_table={'height': '300px', 'overflowY': 'auto'},
+            columns=[{'name': i, 'id': i, "deletable":True} for i in df.columns],
+            style_table={'height': '300px', 'padding' : '50px', 'overflowX': 'scroll', 'margin-top' : '50px'},
         ),
 
-        html.Hr(),  # horizontal line
+        html.Hr(),  
 
-        # Devolvemos el número de filas y columnas del dataframe
-        dbc.Row([
-            dbc.Col([
-                dbc.Alert('El número de Filas del Dataframe es de: {}'.format(df.shape[0]), color="info"),
-            ], width=6),
-            dbc.Col([
-                dbc.Alert('El número de Columnas del Dataframe es de: {}'.format(df.shape[1]), color="info"),
-            ], width=6),
-        ]),
-        
-        html.Hr(),
-
-        html.H2(["", dbc.Badge("Selección de características", className="ms-1")]),
-        dcc.Tab(label='Analisis Correlacional', children=[
+        html.H2(["", dbc.Badge("Análisis Correlacional", className="ms-1")]),
+        dcc.Tab(label='Matriz de Correlación', children=[
             dcc.Graph(
                 id='matriz',
                 figure={
@@ -166,164 +169,8 @@ def parse_contents(contents, filename,date):
         ]),
 
         dcc.Tabs([
-            dcc.Tab(label='Resumen estadístico', style=tab_style, selected_style=tab_selected_style,children=[
-                html.Br(),
-                dbc.Table(
-                    # Mostamos el resumen estadístico de las variables de tipo object, con su descripción a la izquierda
-                    [
-                        html.Thead(
-                            html.Tr(
-                                [
-                                    # Primer columna: nombre de la estadística (count, mean, std, min, 25%, 50%, 75%, max) y las demás columnas: nombre de las columnas (recorremos las columnas del dataframe)
-                                    html.Th('Estadística'),
-                                    *[html.Th(column) for column in df.describe().columns]
 
-                                ]
-                            )
-                        ),
-                        html.Tbody(
-                            [
-                                html.Tr(
-                                    [
-                                        html.Td('count'),
-                                        *[html.Td(df.describe().loc['count'][column]) for column in df.describe().columns]
-                                    ]
-                                ),
-                                html.Tr(
-                                    [
-                                        html.Td('mean'),
-                                        *[html.Td(df.describe().loc['mean'][column]) for column in df.describe().columns]
-                                    ]
-                                ),
-                                html.Tr(
-                                    [
-                                        html.Td('std'),
-                                        *[html.Td(df.describe().loc['std'][column]) for column in df.describe().columns]
-                                    ]
-                                ),
-                                html.Tr(
-                                    [
-                                        html.Td('min'),
-                                        *[html.Td(df.describe().loc['min'][column]) for column in df.describe().columns]
-                                    ]
-                                ),
-                                html.Tr(
-                                    [
-                                        html.Td('25%'),
-                                        *[html.Td(df.describe().loc['25%'][column]) for column in df.describe().columns]
-                                    ]
-                                ),
-                                html.Tr(
-                                    [
-                                        html.Td('50%'),
-                                        *[html.Td(df.describe().loc['50%'][column]) for column in df.describe().columns]
-                                    ]
-                                ),
-                                html.Tr(
-                                    [
-                                        html.Td('75%'),
-                                        *[html.Td(df.describe().loc['75%'][column]) for column in df.describe().columns]
-                                    ]
-                                ),
-                                html.Tr(
-                                    [
-                                        html.Td('max'),
-                                        *[html.Td(df.describe().loc['max'][column]) for column in df.describe().columns]
-                                    ]
-                                ),
-                            ]
-                        )
-                    ],
-
-                    bordered=True,
-                    hover=True,
-                    responsive=True,
-                    striped=True,
-                    style={'textAlign': 'center', 'width': '100%'}
-                ),
-            ]),
-
-            dcc.Tab(label='EDA', style=tab_style, selected_style=tab_selected_style,children=[
-                # Tabla mostrando un resumen de las variables numéricas
-                html.Br(),
-                dbc.Table(
-                    [
-                        html.Thead(
-                            html.Tr(
-                                [
-                                    # Primer columna: nombre de la columna y las demás columnas: nombre de las estadísticas (count, mean, std, min, 25%, 50%, 75%, max)
-                                    html.Th('Variable'),
-                                    html.Th('Tipo de dato'),
-                                    html.Th('Count'),
-                                    html.Th('Valores nulos'),
-                                    html.Th('Valores únicos'),
-                                    html.Th('Datos más frecuentes y su cantidad'),
-                                    html.Th('Datos menos frecuentes y su cantidad'),
-                                ]
-                            )
-                        ),
-                        html.Tbody(
-                            [
-                                html.Tr(
-                                    [
-                                        html.Td(column), # Primera columna: nombre de la columna
-                                        html.Td(
-                                            str(df.dtypes[column]),
-                                            style={
-                                                'color': 'green' if df.dtypes[column] == 'float64' else 'blue' if df.dtypes[column] == 'int64' else 'red' if df.dtypes[column] == 'object' else 'orange' if df.dtypes[column] == 'bool' else 'purple'
-                                            }
-                                        ),
-
-                                        # Count del tipo de dato (y porcentaje)
-                                        html.Td(
-                                            [
-                                                html.P("{}".format(df[column].count())),
-                                            ]
-                                        ),
-
-                                        html.Td(
-                                            df[column].isnull().sum(),
-                                            style={
-                                                'color': 'red' if df[column].isnull().sum() > 0 else 'green'
-                                            }
-                                        ),
-
-                                        #Valores únicos
-                                        html.Td(
-                                            df[column].nunique(),
-                                            style={
-                                                'color': 'green' if df[column].nunique() == 0 else 'black'
-                                            }
-                                        ),
-
-                                        # Top valores más frecuentes
-                                        html.Td(
-                                            [
-                                                html.P("{}".format(df[column].value_counts().index[0])+" ("+str(round(df[column].value_counts().values[0]*1,2))+")"),
-                                            ]
-                                        ),
-
-                                        # Top valores menos frecuentes
-                                        html.Td(
-                                            [
-                                                html.P("{}".format(df[column].value_counts().index[-1])+" ("+str(round(df[column].value_counts().values[-1]*1,2))+")"),
-                                            ]
-                                        ),
-                                    ]
-                                ) for column in df.dtypes.index
-                            ]
-                        )
-                    ],
-                    bordered=True,
-                    hover=True,
-                    responsive=True,
-                    striped=True,
-                    # Texto centrado y tabla alineada al centro de la página
-                    style={'textAlign': 'center', 'width': '100%'}
-                ),
-            ]),
-        
-            dcc.Tab(label='Distribución de Datos', style=tab_style, selected_style=tab_selected_style,children=[
+            dcc.Tab(label='Grafico de Dispersión', style=tab_style, selected_style=tab_selected_style,children=[
                 html.Div([
                     "Selecciona la variable X:",
                     dcc.Dropdown(
@@ -378,16 +225,10 @@ def parse_contents(contents, filename,date):
                 # Salto de línea
                 html.Br(),
 
-                html.H2(["", dbc.Badge("Calibración del algoritmo", className="ms-1")]),
+                html.H2(["", dbc.Badge("Configuración del algoritmo", className="ms-1")]),
                 html.Br(),
 
-                dcc.Markdown('''
-                    💭 **kernel**: Especifica el tipo de kernel a utilizar en el algoritmo. Los kernels disponibles son 'linear', 'poly', 'rbf', 'sigmoid'.
-
-                    💭Mediante transformaciones matemáticas, se mapean los datos en un mejor espacio de representación por una determinada función, denominada kernel. Encontrar la transformación correcta para un conjunto de datos no es una tarea fácil, por lo que se usan diferentes kernels en una implementación de SVM.
-
-                '''),
-
+                
                 dbc.Row([
                     dbc.Col([
                         dcc.Markdown('''**Kernel**'''),
@@ -411,21 +252,29 @@ def parse_contents(contents, filename,date):
 
                 html.Hr(),
 
-                # Mostramos la matriz de confusión
+                dcc.Tabs([
+                dcc.Tab(label='Matriz de Clasificación', style=tab_style2, selected_style=tab_selected_style2, children=[
                 html.Div(id='matriz-svm'),
+                ]),
 
-                html.Hr(),
 
-                # Mostramos el reporte de clasificación
+
+                dcc.Tab(label='Información Configuración', style=tab_style2, selected_style=tab_selected_style2, children=[
                 html.Div(id='clasificacion-svm'),
+                ]),
 
-                html.Hr(),
 
-                html.H2(["", dbc.Badge("Curva ROC", className="ms-1")]),
+                dcc.Tab(label='Curva ROC', style=tab_style2, selected_style=tab_selected_style2, children=[
+                html.H2(["", dbc.Badge("Gráfica Curva ROC", className="ms-1")]),
                 dcc.Graph(id='roc-arbol-clasificacion-svm'),
+                ]),
+                 
 
+                dcc.Tab(label='Vectores de Soporte', style=tab_style2, selected_style=tab_selected_style2, children=[
                 html.H2(["", dbc.Badge("Vectores de Soporte", className="ms-1")]),
                 dcc.Graph(id='vectores-svm'),
+                ]),
+                ]),
             ]),
 
             dcc.Tab(label='Nuevas Clasificaciones', style=tab_style, selected_style=tab_selected_style, children=[
@@ -437,8 +286,8 @@ def parse_contents(contents, filename,date):
                 html.Div(id='valor-clasificacion-svm2'),
                 
             ]),
-        ])
-    ]) #Fin del layout
+        ],  style={'margin-top' : '15px'})
+    ], className="sub-page", style={'padding' : '100px', 'overflow' : 'auto'}) #Fin del layout
 
 @callback(Output('output-data-upload-svm', 'children'),
             Input('upload-data', 'contents'),
@@ -460,9 +309,9 @@ def update_output(list_of_contents, list_of_names,list_of_dates):
 def update_graph(xaxis_column, yaxis_column, caxis_column):
     dff = df
     dff[caxis_column] = dff[caxis_column].astype('category')
-    fig = px.scatter(dff, x=xaxis_column, y=yaxis_column, color=caxis_column, title='Gráfico de dispersión',symbol=caxis_column,marginal_x="histogram", marginal_y="histogram")
+    fig = px.scatter(dff, x=xaxis_column, y=yaxis_column, color=caxis_column, title='Gráfico de dispersión')
     fig.update_layout(showlegend=True, xaxis_title=xaxis_column, yaxis_title=yaxis_column,
-                    font=dict(family="Courier New, monospace", size=18, color="black"),legend_title_text=caxis_column)
+                    font=dict(size=18, color="blue"),legend_title_text=caxis_column)
     fig.update_traces(marker=dict(size=8, line=dict(width=1, color='DarkSlateGrey')), selector=dict(mode='markers'))
     # str(df.groupby(caxis_column).size()[0])
 
@@ -478,9 +327,9 @@ def update_graph(xaxis_column, yaxis_column, caxis_column):
     Input('submit-button-clasificacion-svm','n_clicks'),
     State('X_Clase-svm', 'value'),
     State('Y_Clase-svm', 'value'),
-    State('kernel-svm', 'value'),
-    State(ThemeChangerAIO.ids.radio("theme"), 'value'))
-def clasificacion(n_clicks, X_Clase, Y_Clase, kernel, theme):
+    State('kernel-svm', 'value'))
+    #State(ThemeChangerAIO.ids.radio("theme"), 'value'))
+def clasificacion(n_clicks, X_Clase, Y_Clase, kernel):
     if n_clicks is not None:
         global ModeloSVM
 
@@ -635,7 +484,7 @@ def clasificacion(n_clicks, X_Clase, Y_Clase, kernel, theme):
                 class_name='table table-hover table-bordered table-striped',
             ),
 
-            html.H2(["", dbc.Badge("Reporte de la efectividad del algoritmo obtenido", className="ms-1")]),
+            html.H2(["", dbc.Badge("Métricas Algoritmos", className="ms-1")]),
             dbc.Table(
                 [
                     html.Thead(

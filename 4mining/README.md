@@ -20,15 +20,7 @@ source venv/bin/activate
 
 ```
 
-Clone the git repo, then install the requirements with pip
 
-```
-
-git clone https://github.com/plotly/dash-sample-apps
-cd dash-sample-apps/apps/dash-financial-report
-pip install -r requirements.txt
-
-```
 
 Run the app
 
@@ -37,21 +29,4 @@ Run the app
 python app.py
 
 ```
-
-## About the app
-
-This is an interactive, multi-page report which displays a variety of tables, bullet points, and Plotly interactive plots in a report format. The app incorporates custom local and external CSS to display distinct pages for PDF print.
-
-## Built With
-
-- [Dash](https://dash.plot.ly/) - Main server and interactive components
-- [Plotly Python](https://plot.ly/python/) - Used to create the interactive plots
-
-The following are screenshots for the app in this repo:
-
-![animated](screenshots/dash-financial-report-demo.gif)
-
-![screenshot](screenshots/report-screenshot.png)
-
-![screenshot](screenshots/report-interactive.png)
 
